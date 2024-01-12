@@ -145,7 +145,7 @@ typedef NS_ENUM(NSUInteger, FSCalendarOrientation) {
 }
 
 - (void)initialize
-{   
+{
     _appearance = [[FSCalendarAppearance alloc] init];
     _appearance.calendar = self;
     
@@ -287,9 +287,7 @@ typedef NS_ENUM(NSUInteger, FSCalendarOrientation) {
     if (_needsAdjustingViewFrame) {
         _needsAdjustingViewFrame = NO;
         
-        if (CGSizeEqualToSize(_transitionCoordinator.cachedMonthSize, CGSizeZero)) {
-            _transitionCoordinator.cachedMonthSize = self.frame.size;
-        }
+        _transitionCoordinator.cachedMonthSize = self.frame.size;
         
         _contentView.frame = self.bounds;
         CGFloat headerHeight = self.preferredHeaderHeight;
@@ -1457,7 +1455,7 @@ typedef NS_ENUM(NSUInteger, FSCalendarOrientation) {
     }
     if (cell) {
         cell.selected = YES;
-        if (self.collectionView.allowsMultipleSelection) {   
+        if (self.collectionView.allowsMultipleSelection) {
             [self.collectionView selectItemAtIndexPath:[self.collectionView indexPathForCell:cell] animated:NO scrollPosition:UICollectionViewScrollPositionNone];
         }
     }
@@ -1514,11 +1512,20 @@ typedef NS_ENUM(NSUInteger, FSCalendarOrientation) {
 // http://stackoverflow.com/questions/25830448/what-is-the-best-way-to-detect-orientation-in-an-app-extension/26023538#26023538
 - (FSCalendarOrientation)currentCalendarOrientation
 {
-    CGFloat scale = [UIScreen mainScreen].scale;
-    CGSize nativeSize = [UIScreen mainScreen].currentMode.size;
-    CGSize sizeInPoints = [UIScreen mainScreen].bounds.size;
-    FSCalendarOrientation orientation = scale * sizeInPoints.width == nativeSize.width ? FSCalendarOrientationPortrait : FSCalendarOrientationLandscape;
-    return orientation;
+    if (@available(iOS 13.0, *)) {
+          UIWindowScene *windowScene = nil;
+          for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
+              if ([scene isKindOfClass:UIWindowScene.class] && scene.activationState == UISceneActivationStateForegroundActive) {
+                  windowScene = scene;
+                  break;
+              }
+          }
+          return windowScene.interfaceOrientation == UIInterfaceOrientationLandscapeLeft || windowScene.interfaceOrientation == UIInterfaceOrientationLandscapeRight ? FSCalendarOrientationLandscape : FSCalendarOrientationPortrait;
+      } else {
+          //deprecated
+          UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+          return orientation == UIInterfaceOrientationLandscapeLeft || orientation == UIInterfaceOrientationLandscapeRight ? FSCalendarOrientationLandscape : FSCalendarOrientationPortrait;
+      }
 }
 
 - (void)adjustMonthPosition
